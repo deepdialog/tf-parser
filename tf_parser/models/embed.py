@@ -19,5 +19,9 @@ class Embed(tf.keras.Model):
         self.model = model
 
     def call(self, inputs):
+        """
+        input: [B, L]
+        output: [B, L, E]
+        """
         return self.model(inputs)
 

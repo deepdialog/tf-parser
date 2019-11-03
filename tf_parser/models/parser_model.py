@@ -24,7 +24,8 @@ class ParserModel(tf.keras.Model):
             vocab_size=vocab_size
         )
         self.en = Encoder(
-            embedding_size=embedding_size
+            embedding_size=hidden_size,
+            hidden_size=embedding_size
         )
 
         self.p0 = tf.keras.models.Sequential([
@@ -41,12 +42,22 @@ class ParserModel(tf.keras.Model):
         self.b1 = Biaffine(proj0_size, proj1_size, tag1_size)
 
     def call(self, inputs):
+        """
+        input:
+            inputs: [batch_size, lengths]
+        """
         lengths = tf.reduce_sum(tf.cast(tf.math.greater(inputs, 0), tf.int32), axis=-1)
+        # m: [batch_size, lengths, embedding_size]
         m = self.emb(inputs)
+        # m: [batch_size, lengths, hidden_size]
         m = self.en(m)
+        # x0: [batch_size, lengths, proj0_size]
         x0 = self.p0(m)
+        # x1: [batch_size, lengths, proj1_size]
         x1 = self.p1(m)
+        # t0: [batch_size, lengths, lengths, tag0_size]
         t0 = self.b0(x0, x1)
+        # t1: [batch_size, lengths, lengths, tag1_size]
         t1 = self.b1(x0, x1)
         return t0, t1
 
